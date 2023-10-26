@@ -37,20 +37,22 @@ az network vnet create --name cake-spoke1-vnet --resource-group $rg --location $
 
 az network vnet create --name cake-spoke2-vnet --resource-group $rg --location $location --address-prefixes 10.2.0.0/16 --subnet-name spoke-2-subnet-a --subnet-prefix 10.2.1.0/24
 
-# Create three Linux machines. One in each network
+# Create three Linux machines. One in each network. UbuntuLTS image name does not work anymore. Had to use Ubuntu2204
 
-az vm create --resource-group $rg --name spoke-1-vm --image UbuntuLTS --generate-ssh-keys --public-ip-address myPublicIP-spoke-1-vm --public-ip-sku Standard --vnet-name cake-spoke1-vnet --subnet spoke-1-subnet-a --size Standard_B1s --no-wait
+az vm create --resource-group $rg --name spoke-1-vm --image Ubuntu2204 --generate-ssh-keys --public-ip-address myPublicIP-spoke-1-vm --public-ip-sku Standard --vnet-name cake-spoke1-vnet --subnet spoke-1-subnet-a --size Standard_B1s --no-wait
 
-az vm create --resource-group $rg --name spoke-2-vm --image UbuntuLTS --generate-ssh-keys --public-ip-address myPublicIP-spoke-2-vm --public-ip-sku Standard --vnet-name cake-spoke2-vnet --subnet spoke-2-subnet-a --size Standard_B1s --no-wait
+az vm create --resource-group $rg --name spoke-2-vm --image Ubuntu2204 --generate-ssh-keys --public-ip-address myPublicIP-spoke-2-vm --public-ip-sku Standard --vnet-name cake-spoke2-vnet --subnet spoke-2-subnet-a --size Standard_B1s --no-wait
 
-az vm create --resource-group $rg --name hub-nva-vm --image UbuntuLTS --generate-ssh-keys --public-ip-address myPublicIP-nva --public-ip-sku Standard --vnet-name cake-hub-vnet --subnet nva-subnet --size Standard_B1s
+az vm create --resource-group $rg --name hub-nva-vm --image Ubuntu2204 --generate-ssh-keys --public-ip-address myPublicIP-nva --public-ip-sku Standard --vnet-name cake-hub-vnet --subnet nva-subnet --size Standard_B1s
 
 # Update the NVA VM to enable IP forwarding. This needs to be enabled on both the VM NIC and within the OS
 # via extension.
 
 az network nic update --name hub-nva-vmVMNic --resource-group $rg --ip-forwarding true
 
-az vm extension set --resource-group $rg --vm-name hub-nva-vm --name customScript --publisher Microsoft.Azure.Extensions --settings '{\"commandToExecute\":\"sudo sysctl -w net.ipv4.ip_forward=1\"}'
+# Below custom script escape characters and quotes have been corrected so that pwsh can parse it without errors
+
+az vm extension set --resource-group $rg --vm-name hub-nva-vm --name customScript --publisher Microsoft.Azure.Extensions --settings "{`"commandToExecute`":`"sudo sysctl -w net.ipv4.ip_forward=1`"}"
 
 ##############################
 ######## END - SCRIPT ########
